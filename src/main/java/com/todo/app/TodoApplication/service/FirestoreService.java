@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
-public class FirestoreService {
+public final class FirestoreService {
 
     private Firestore db;
 
@@ -23,7 +23,9 @@ public class FirestoreService {
     List<Map<String, Object>> getAllDocumentsFromCollection(String collectionName) throws ExecutionException,
             InterruptedException, IllegalArgumentException {
 
-        if (collectionName == null) throw new IllegalArgumentException("Collection name cannot be null!");
+        if (collectionName == null) {
+            throw new IllegalArgumentException("Collection name cannot be null!");
+        }
         ApiFuture<QuerySnapshot> future = db.collection(collectionName).get();
         List<QueryDocumentSnapshot> documents = future.get().getDocuments();
         return documents.stream()
@@ -31,18 +33,8 @@ public class FirestoreService {
                 .collect(Collectors.toList());
     }
 
-    List<String> getAllDocumentNamesFromCollection(String collectionName)
-            throws ExecutionException, InterruptedException, IllegalArgumentException {
-        if (collectionName == null) throw new IllegalArgumentException("Collection name cannot be null!");
-        ApiFuture<QuerySnapshot> future = db.collection(collectionName).get();
-        return future.get().getDocuments().stream()
-                .map(DocumentSnapshot::getId)
-                .collect(Collectors.toList());
-    }
-
-    Map<String, Object> getDocumentFields(String collectionName, String documentName)
-            throws ExecutionException, InterruptedException,
-            IllegalArgumentException, NoSuchElementException {
+    Map<String, Object> getDocumentFields(String collectionName, String documentName) throws ExecutionException,
+            InterruptedException, IllegalArgumentException, NoSuchElementException {
         if (collectionName == null || documentName == null) {
             throw new IllegalArgumentException("Parameters cannot be null!");
         }
@@ -94,13 +86,12 @@ public class FirestoreService {
                 .get();
     }
 
-    void deleteDocument(String collectionName, String documentName)
-            throws IllegalArgumentException, NoSuchElementException,
+    void deleteDocument(String collectionName, String documentName) throws IllegalArgumentException, NoSuchElementException,
             InterruptedException, ExecutionException {
         if (collectionName == null || documentName == null) {
             throw new IllegalArgumentException("Parameters 'collectionName' and/or 'documentName' cannot be null!");
         }
-        if (isDocumentExists(collectionName, documentName)) {
+        if (documentExists(collectionName, documentName)) {
             db
                     .collection(collectionName)
                     .document(documentName)
@@ -111,15 +102,14 @@ public class FirestoreService {
         }
     }
 
-    void deleteFields(String collectionName, String documentName, List<String> idS)
-            throws IllegalArgumentException, NoSuchElementException,
-            InterruptedException, ExecutionException {
+    void deleteFields(String collectionName, String documentName, List<String> listOfIdS) throws IllegalArgumentException,
+            NoSuchElementException, InterruptedException, ExecutionException {
         if (collectionName == null || documentName == null) {
             throw new IllegalArgumentException("Parameters 'collectionName' and/or 'documentName' cannot be null!");
         }
-        if (isDocumentExists(collectionName, documentName)) {
+        if (documentExists(collectionName, documentName)) {
             Map<String, Object> fieldsToDelete = new HashMap<>();
-            idS.forEach(id -> fieldsToDelete.put(id, FieldValue.delete()));
+            listOfIdS.forEach(id -> fieldsToDelete.put(id, FieldValue.delete()));
             db
                     .collection(collectionName)
                     .document(documentName)
@@ -130,7 +120,8 @@ public class FirestoreService {
         }
     }
 
-    private boolean isDocumentExists(String collectionName, String documentName) throws ExecutionException, InterruptedException {
+    private boolean documentExists(String collectionName, String documentName) throws ExecutionException, InterruptedException {
         return db.collection(collectionName).document(documentName).get().get().exists();
     }
+
 }
